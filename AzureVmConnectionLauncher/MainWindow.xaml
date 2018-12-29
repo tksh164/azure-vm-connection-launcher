@@ -1,0 +1,79 @@
+﻿<Window x:Class="AzureVmConnectionLauncher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AzureVmConnectionLauncher"
+        DataContext="{Binding Main, Source={StaticResource Locator}}"
+        mc:Ignorable="d"
+        Title="Azure VM Connection Launcher" Height="700" Width="650">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Button Grid.Row="0" Content="Connect to Azure" Margin="4" Command="{Binding ConnectAccountCommand}"/>
+        
+        <TreeView Grid.Row="1" BorderThickness="0" ItemsSource="{Binding Subscriptions, Mode=OneWay}">
+
+            <TreeView.Resources>
+                <ContextMenu x:Key="ConnectionContextMenu">
+                    <MenuItem Header="RDP"/>
+                    <MenuItem Header="SSH"/>
+                </ContextMenu>
+            </TreeView.Resources>
+
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="TreeViewItem">
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                </Style>
+            </TreeView.ItemContainerStyle>
+            
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding ResourceGroups}">
+                    <StackPanel Orientation="Horizontal">
+                        <!--<TextBlock Text="&#xE8D7; " FontFamily="Segoe MDL2 Assets"/>-->
+                        <Image Source="{StaticResource SubscriptionDrawingImage}" Height="20" Margin="0,2,5,2"/>
+                        <TextBlock Text="{Binding DisplayText}" Margin="0,2,0,2"/>
+                    </StackPanel>
+                    <HierarchicalDataTemplate.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding VirtualMachines}">
+                            <StackPanel Orientation="Horizontal">
+                                <!--<TextBlock Text="&#xE8B7; " FontFamily="Segoe MDL2 Assets"/>-->
+                                <Image Source="{StaticResource ResourceGroupDrawingImage}" Height="20" Margin="0,2,5,2"/>
+                                <TextBlock Text="{Binding DisplayText}" Margin="0,2,0,2"/>
+                            </StackPanel>
+                            <HierarchicalDataTemplate.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding IpAddressFqdnPairs}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <!--<TextBlock Text="&#xE8FC; " FontFamily="Segoe MDL2 Assets"/>-->
+                                        <Image Source="{StaticResource VirtualMachineDrawingImage}" Height="20" Margin="0,2,5,2"/>
+                                        <TextBlock Text="{Binding DisplayText}" Margin="0,2,0,2"/>
+                                    </StackPanel>
+                                    <HierarchicalDataTemplate.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <!--<TextBlock Text="&#xE8AF; " FontFamily="Segoe MDL2 Assets"/>-->
+                                                <Image Source="{StaticResource PublicIPAddressDrawingImage}" Height="20" Margin="0,2,5,2"/>
+                                                <TextBlock Text="{Binding DisplayText}" Margin="0,2,0,2">
+                                                    <TextBlock.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Header="RDP" Command="{Binding ConnectVMUsingRdpCommand}"/>
+                                                            <MenuItem Header="SSH" Command="{Binding ConnectVMUsingSshCommand}"/>
+                                                        </ContextMenu>
+                                                    </TextBlock.ContextMenu>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </HierarchicalDataTemplate.ItemTemplate>
+                                </HierarchicalDataTemplate>
+                            </HierarchicalDataTemplate.ItemTemplate>
+                        </HierarchicalDataTemplate>
+                    </HierarchicalDataTemplate.ItemTemplate>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+    </Grid>
+</Window>
