@@ -1,1 +1,1 @@
-# azure-vm-connection-launcher
+# Azure VM Connection Launcher
