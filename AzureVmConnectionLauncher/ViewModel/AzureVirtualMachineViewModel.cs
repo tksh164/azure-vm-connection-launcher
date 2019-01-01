@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Windows;
 using GalaSoft.MvvmLight;
 using AzureVmConnectionLauncher.Model;
 
@@ -24,7 +25,7 @@ namespace AzureVmConnectionLauncher.ViewModel
 
         public bool IsPlaceholder { get; set; }
 
-        public string DisplayText
+        public string MainDisplayText
         {
             get
             {
@@ -34,7 +35,37 @@ namespace AzureVmConnectionLauncher.ViewModel
                 }
                 else
                 {
-                    return string.Format("{0} ({1}, {2})", VirtualMachine.VMName, VirtualMachine.OSType, VirtualMachine.PowerState);
+                    return VirtualMachine.VMName;
+                }
+            }
+        }
+
+        public string SubDisplayText
+        {
+            get
+            {
+                if (IsPlaceholder)
+                {
+                    return "";
+                }
+                else
+                {
+                    return string.Format("{0}, {1}", VirtualMachine.PowerState, VirtualMachine.OSType);
+                }
+            }
+        }
+
+        public Visibility SubDisplayTextVisibility
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(SubDisplayText))
+                {
+                    return Visibility.Collapsed;
+                }
+                else
+                {
+                    return Visibility.Visible;
                 }
             }
         }

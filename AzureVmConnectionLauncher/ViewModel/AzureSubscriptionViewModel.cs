@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using GalaSoft.MvvmLight;
 using AzureVmConnectionLauncher.Model;
 using AzureVmConnectionLauncher.Service;
@@ -53,11 +54,34 @@ namespace AzureVmConnectionLauncher.ViewModel
             }
         }
 
-        public string DisplayText
+        public string MainDisplayText
         {
             get
             {
-                return string.Format("{0} ({1})", Subscription.Name, Subscription.SubscriptionId);
+                return Subscription.Name;
+            }
+        }
+
+        public string SubDisplayText
+        {
+            get
+            {
+                return Subscription.SubscriptionId;
+            }
+        }
+
+        public Visibility SubDisplayTextVisibility
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(SubDisplayText))
+                {
+                    return Visibility.Collapsed;
+                }
+                else
+                {
+                    return Visibility.Visible;
+                }
             }
         }
     }

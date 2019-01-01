@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:AzureVmConnectionLauncher"
         DataContext="{Binding Main, Source={StaticResource Locator}}"
         mc:Ignorable="d"
-        Title="Azure VM Connection Launcher" Height="700" Width="650">
+        Title="Azure VM Connection Launcher" Height="700" Width="500">
     
     <Grid>
         <Grid.RowDefinitions>
@@ -36,21 +36,30 @@
                     <StackPanel Orientation="Horizontal">
                         <!--<TextBlock Text="&#xE8D7; " FontFamily="Segoe MDL2 Assets"/>-->
                         <Image Source="{StaticResource SubscriptionDrawingImage}" Height="20" Margin="0,2,5,2"/>
-                        <TextBlock Text="{Binding DisplayText}" Margin="0,2,0,2"/>
+                        <StackPanel Margin="0,4,0,4">
+                            <TextBlock Text="{Binding MainDisplayText}" Margin="0" FontSize="14"/>
+                            <TextBlock Text="{Binding SubDisplayText}" Margin="0" FontSize="10"/>
+                        </StackPanel>
                     </StackPanel>
                     <HierarchicalDataTemplate.ItemTemplate>
                         <HierarchicalDataTemplate ItemsSource="{Binding VirtualMachines}">
                             <StackPanel Orientation="Horizontal">
                                 <!--<TextBlock Text="&#xE8B7; " FontFamily="Segoe MDL2 Assets"/>-->
-                                <Image Source="{StaticResource ResourceGroupDrawingImage}" Height="20" Margin="0,2,5,2"/>
-                                <TextBlock Text="{Binding DisplayText}" Margin="0,2,0,2"/>
+                                <Image Source="{StaticResource ResourceGroupDrawingImage}" Height="20" Margin="0,2,8,2"/>
+                                <StackPanel Margin="0,3,0,3">
+                                    <TextBlock Text="{Binding MainDisplayText}" Margin="0" FontSize="14"/>
+                                    <TextBlock Visibility="{Binding SubDisplayTextVisibility}" Text="{Binding SubDisplayText}" Margin="0" FontSize="10"/>
+                                </StackPanel>
                             </StackPanel>
                             <HierarchicalDataTemplate.ItemTemplate>
                                 <HierarchicalDataTemplate ItemsSource="{Binding IpAddressFqdnPairs}">
                                     <StackPanel Orientation="Horizontal">
                                         <!--<TextBlock Text="&#xE8FC; " FontFamily="Segoe MDL2 Assets"/>-->
-                                        <Image Source="{StaticResource VirtualMachineDrawingImage}" Height="20" Margin="0,2,5,2"/>
-                                        <TextBlock Text="{Binding DisplayText}" Margin="0,2,0,2"/>
+                                        <Image Source="{StaticResource VirtualMachineDrawingImage}" Height="20" Margin="0,2,8,2"/>
+                                        <StackPanel Margin="0,3,0,3">
+                                            <TextBlock Text="{Binding MainDisplayText}" Margin="0" FontSize="14"/>
+                                            <TextBlock Visibility="{Binding SubDisplayTextVisibility}" Text="{Binding SubDisplayText}" Margin="0" FontSize="10"/>
+                                        </StackPanel>
                                     </StackPanel>
                                     <HierarchicalDataTemplate.ItemTemplate>
                                         <DataTemplate>
