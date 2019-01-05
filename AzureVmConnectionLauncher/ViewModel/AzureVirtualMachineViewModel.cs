@@ -9,17 +9,17 @@ namespace AzureVmConnectionLauncher.ViewModel
     {
         public AzureVirtualMachine VirtualMachine { get; set; }
 
-        private ObservableCollection<IpAddressFqdnPairViewModel> ipAddressFqdnPairs;
-        public ObservableCollection<IpAddressFqdnPairViewModel> IpAddressFqdnPairs
+        private ObservableCollection<ConnectionDestinationViewModel> connectionDestinations;
+        public ObservableCollection<ConnectionDestinationViewModel> ConnectionDestinations
         {
             get
             {
-                return ipAddressFqdnPairs;
+                return connectionDestinations;
             }
             set
             {
-                ipAddressFqdnPairs = value;
-                RaisePropertyChanged(nameof(IpAddressFqdnPair));
+                connectionDestinations = value;
+                RaisePropertyChanged(nameof(ConnectionDestinations));
             }
         }
 

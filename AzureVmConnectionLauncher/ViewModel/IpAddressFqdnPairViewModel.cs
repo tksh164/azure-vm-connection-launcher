@@ -22,7 +22,7 @@ namespace AzureVmConnectionLauncher.ViewModel
         private void ConnectVMUsingRdp()
         {
             var vmConnectionService = new VMConnectionService();
-            vmConnectionService.StartRdpProcess(IpAddressFqdnPair.IpAddress, IpAddressFqdnPair.Fqdn, VirtualMachine.AdminUserName);
+            //vmConnectionService.StartRdpProcess(IpAddressFqdnPair.IpAddress, IpAddressFqdnPair.Fqdn, VirtualMachine.AdminUserName);
         }
 
         public RelayCommand ConnectVMUsingSshCommand { get; set; }
@@ -30,7 +30,7 @@ namespace AzureVmConnectionLauncher.ViewModel
         private void ConnectVMUsingSsh()
         {
             var vmConnectionService = new VMConnectionService();
-            vmConnectionService.StartSshProcess(IpAddressFqdnPair.IpAddress, IpAddressFqdnPair.Fqdn, VirtualMachine.AdminUserName);
+            //vmConnectionService.StartSshProcess(IpAddressFqdnPair.IpAddress, IpAddressFqdnPair.Fqdn, VirtualMachine.AdminUserName);
         }
 
         public string DisplayText

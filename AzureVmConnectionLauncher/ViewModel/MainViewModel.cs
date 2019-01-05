@@ -44,8 +44,7 @@ namespace AzureVmConnectionLauncher.ViewModel
 
         private void ConnectAccount()
         {
-            operationService.ConnectAccount();
-            Subscriptions = operationService.GetSubscriptions();
+            Subscriptions = operationService.ConnectAccount();
         }
 
         private ObservableCollection<AzureSubscriptionViewModel> subscriptionTreeViewItems;

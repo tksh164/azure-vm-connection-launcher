@@ -1,198 +1,143 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
-using System.Management.Automation;
-using System.Management.Automation.Runspaces;
+using System.Text;
+using Newtonsoft.Json;
 using AzureVmConnectionLauncher.Model;
 
 namespace AzureVmConnectionLauncher.Service
 {
     internal static class AzureOperation
     {
-        public static void ConnectAccount()
+        private static class AzureCli
         {
-            using (var runspace = RunspaceFactory.CreateRunspace())
+            private static string GetPythonExePath()
             {
-                runspace.Open();
-
-                using (var psInstance = PowerShell.Create())
+                const string pythonExePath = @"%ProgramFiles(x86)%\Microsoft SDKs\Azure\CLI2\python.exe";
+                var resolvedPythonExePath = Environment.ExpandEnvironmentVariables(pythonExePath);
+                if (!File.Exists(resolvedPythonExePath))
                 {
-                    psInstance.Runspace = runspace;
-
-                    const string scriptFilePath = @".\PowerShellScripts\ConnectAzure.ps1";
-                    var scriptContent = File.ReadAllText(scriptFilePath);
-                    psInstance.AddScript(scriptContent);
-
-                    var psOutputs = psInstance.Invoke();
-
-                    //var result = psInstance.BeginInvoke();
-                    //result.AsyncWaitHandle.WaitOne();
-                    //var psOutputs = psInstance.EndInvoke(result);
-                    //result.AsyncWaitHandle.Close();
-
-                    //var account = new AzureAccount();
-                    //foreach (var outputItem in psOutputs)
-                    //{
-                    //    if (outputItem != null)
-                    //    {
-                    //        var v = outputItem.Properties["Environments"].Value;
-                    //        //Console.WriteLine();
-                    //    }
-                    //}
-                    //return account;
+                    throw new FileNotFoundException("The python.exe does not exist.", resolvedPythonExePath);
                 }
+                return resolvedPythonExePath;
+            }
+
+            public static object InvokeAzureCliCommand(string cliCommand)
+            {
+                StringBuilder stdout = new StringBuilder();
+                StringBuilder stderr = new StringBuilder();
+
+                using (var proc = new Process())
+                {
+                    proc.StartInfo.FileName = GetPythonExePath();
+                    proc.StartInfo.Arguments = string.Format(@"-IBm azure.cli {0}", cliCommand);
+
+                    proc.StartInfo.LoadUserProfile = true;
+                    proc.StartInfo.UseShellExecute = false;
+                    proc.StartInfo.CreateNoWindow = true;
+
+                    proc.StartInfo.RedirectStandardOutput = true;
+                    proc.StartInfo.StandardOutputEncoding = Encoding.Default;
+                    proc.OutputDataReceived += (object sender, DataReceivedEventArgs e) => {
+                        stdout.Append(e.Data);
+                    };
+
+                    proc.StartInfo.RedirectStandardError = true;
+                    proc.StartInfo.StandardErrorEncoding = Encoding.Default;
+                    proc.ErrorDataReceived += (object sender, DataReceivedEventArgs e) => {
+                        stderr.Append(e.Data);
+                    };
+
+                    proc.Start();
+                    proc.BeginOutputReadLine();
+                    proc.BeginErrorReadLine();
+                    proc.WaitForExit();
+
+                    if (proc.ExitCode != 0)
+                    {
+                        throw new Exception(string.Format("The Azure CLI command invocation failed. ExitCode={0}, CLICommand={1}", proc.ExitCode, cliCommand));
+                    }
+                }
+
+                var cliCommandResult = stdout.ToString();
+                return JsonConvert.DeserializeObject(cliCommandResult);
             }
         }
 
-        public static ReadOnlyCollection<AzureSubscription> GetSubscriptions()
+        public static ReadOnlyCollection<AzureSubscription> ConnectAccount()
         {
-            using (var runspace = RunspaceFactory.CreateRunspace())
+            dynamic cmdResults = AzureCli.InvokeAzureCliCommand("login --output json");
+
+            var subscriptions = new List<AzureSubscription>();
+            foreach (var sub in cmdResults)
             {
-                runspace.Open();
-
-                using (var psInstance = PowerShell.Create())
+                var subscription = new AzureSubscription()
                 {
-                    psInstance.Runspace = runspace;
-
-                    const string scriptFilePath = @".\PowerShellScripts\GetSubscriptions.ps1";
-                    var scriptContent = File.ReadAllText(scriptFilePath);
-                    psInstance.AddScript(scriptContent);
-
-                    var psOutputs = psInstance.Invoke();
-                    var subscriptions = new List<AzureSubscription>();
-                    foreach (var outputItem in psOutputs)
-                    {
-                        if (outputItem != null)
-                        {
-                            var subscription = new AzureSubscription()
-                            {
-                                SubscriptionId = (string)outputItem.Properties["SubscriptionId"].Value,
-                                TenantId = (string)outputItem.Properties["TenantId"].Value,
-                                Name = (string)outputItem.Properties["Name"].Value,
-                                State = (string)outputItem.Properties["State"].Value,
-                            };
-                            subscriptions.Add(subscription);
-                        }
-                    }
-                    return subscriptions.AsReadOnly();
-                }
+                    SubscriptionId = sub.id,
+                    TenantId = sub.tenantId,
+                    Name = sub.name,
+                    State = sub.state,
+                };
+                subscriptions.Add(subscription);
             }
+            return subscriptions.AsReadOnly();
         }
 
-        public static AzureSubscription SetCurrentSubscription(string subscriptionId)
+        public static ReadOnlyCollection<AzureResourceGroup> GetResourceGroups(string subscriptionId)
         {
-            using (var runspace = RunspaceFactory.CreateRunspace())
+            dynamic cmdResults = AzureCli.InvokeAzureCliCommand(string.Format("group list --subscription {0} --output json", subscriptionId));
+
+            var resourceGroups = new List<AzureResourceGroup>();
+            foreach (var rg in cmdResults)
             {
-                runspace.Open();
-
-                using (var psInstance = PowerShell.Create())
+                var resourceGroup = new AzureResourceGroup()
                 {
-                    psInstance.Runspace = runspace;
-
-                    const string scriptFilePath = @".\PowerShellScripts\SetSubscription.ps1";
-                    var scriptContent = File.ReadAllText(scriptFilePath);
-                    psInstance.AddScript(scriptContent);
-                    psInstance.AddParameter("SubscriptionId", subscriptionId);
-
-                    var psOutputs = psInstance.Invoke();
-                    foreach (var outputItem in psOutputs)
-                    {
-                        if (outputItem != null)
-                        {
-                            var subscription = new AzureSubscription()
-                            {
-                                SubscriptionId = (string)outputItem.Properties["SubscriptionId"].Value,
-                                TenantId = (string)outputItem.Properties["TenantId"].Value,
-                                Name = (string)outputItem.Properties["Name"].Value,
-                                State = (string)outputItem.Properties["State"].Value,
-                            };
-                            return subscription;
-                        }
-                    }
-
-                    throw new InvalidDataException();
-                }
+                    ResourceGroupName = rg.name,
+                    ResourceId = rg.id,
+                    Location = rg.location,
+                };
+                resourceGroups.Add(resourceGroup);
             }
+            return resourceGroups.AsReadOnly();
         }
 
-        public static ReadOnlyCollection<AzureResourceGroup> GetResourceGroups()
+        public static ReadOnlyCollection<AzureVirtualMachine> GetVirtualMachines(string subscriptionId, string resourceGroupName)
         {
-            using (var runspace = RunspaceFactory.CreateRunspace())
+            dynamic cmdResults = AzureCli.InvokeAzureCliCommand(string.Format("vm list --subscription {0} --resource-group {1} --show-details --output json", subscriptionId, resourceGroupName));
+
+            var virtualmachines = new List<AzureVirtualMachine>();
+            foreach (var vm in cmdResults)
             {
-                runspace.Open();
-
-                using (var psInstance = PowerShell.Create())
+                var virtualMachine = new AzureVirtualMachine()
                 {
-                    psInstance.Runspace = runspace;
+                    VMName = vm.name,
+                    AdminUserName = vm.osProfile.adminUsername,
+                    OSType = vm.storageProfile.osDisk.osType,
+                    PowerState = vm.powerState,
+                    ResourceGroupName = vm.resourceGroup,
+                };
 
-                    const string scriptFilePath = @".\PowerShellScripts\GetResourceGroups.ps1";
-                    var scriptContent = File.ReadAllText(scriptFilePath);
-                    psInstance.AddScript(scriptContent);
+                var connectionDestinations = new List<ConnectionDestination>();
+                connectionDestinations.AddRange(GetConnectionDestinationsFromResultText((string)vm.fqdns, ConnectionDestinationType.FQDN));
+                connectionDestinations.AddRange(GetConnectionDestinationsFromResultText((string)vm.publicIps, ConnectionDestinationType.PublicIPAddress));
+                connectionDestinations.AddRange(GetConnectionDestinationsFromResultText((string)vm.privateIps, ConnectionDestinationType.PrivateIPAddress));
+                virtualMachine.ConnectionDestinations = connectionDestinations.AsReadOnly();
 
-                    var psOutputs = psInstance.Invoke();
-                    var resourceGroups = new List<AzureResourceGroup>();
-                    foreach (var outputItem in psOutputs)
-                    {
-                        var resourceGroup = new AzureResourceGroup()
-                        {
-                            ResourceGroupName = (string)outputItem.Properties["ResourceGroupName"].Value,
-                            ResourceId = (string)outputItem.Properties["ResourceId"].Value,
-                            Location = (string)outputItem.Properties["Location"].Value,
-                        };
-                        resourceGroups.Add(resourceGroup);
-                    }
-                    return resourceGroups.AsReadOnly();
-                }
+                virtualmachines.Add(virtualMachine);
             }
+            return virtualmachines.AsReadOnly();
         }
 
-        public static ReadOnlyCollection<AzureVirtualMachine> GetVirtualMachines(string resourceGroupName)
+        private static ReadOnlyCollection<ConnectionDestination> GetConnectionDestinationsFromResultText(string textLine, ConnectionDestinationType connectionDestinationType)
         {
-            using (var runspace = RunspaceFactory.CreateRunspace())
+            var connectionDestinations = new List<ConnectionDestination>();
+            foreach (var part in textLine.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                runspace.Open();
-
-                using (var psInstance = PowerShell.Create())
-                {
-                    psInstance.Runspace = runspace;
-
-                    const string scriptFilePath = @".\PowerShellScripts\GetVMs.ps1";
-                    var scriptContent = File.ReadAllText(scriptFilePath);
-                    psInstance.AddScript(scriptContent);
-                    psInstance.AddParameter("ResourceGroupName", resourceGroupName);
-
-                    var psOutputs = psInstance.Invoke();
-                    var virtualmachines = new List<AzureVirtualMachine>();
-                    foreach (var outputItem in psOutputs)
-                    {
-                        if (outputItem != null)
-                        {
-                            var virtualMachine = new AzureVirtualMachine()
-                            {
-                                VMName = (string)outputItem.Properties["VMName"].Value,
-                                AdminUserName = (string)outputItem.Properties["AdminUserName"].Value,
-                                OSType = (string)outputItem.Properties["OSType"].Value,
-                                PowerState = (string)outputItem.Properties["PowerState"].Value,
-                                ResourceGroupName = (string)outputItem.Properties["ResourceGroupName"].Value,
-                            };
-
-                            var ipAddressFqdnPairs = new List<IpAddressFqdnPair>();
-                            foreach (PSObject pair in (object[])outputItem.Properties["IpAddressFqdnPairs"].Value)
-                            {
-                                var ipAddress = (string)pair.Properties["IpAddress"].Value;
-                                var fqdn = (string)pair.Properties["Fqdn"].Value;
-
-                                var ipAddressFqdnPair = new IpAddressFqdnPair(ipAddress, fqdn);
-                                ipAddressFqdnPairs.Add(ipAddressFqdnPair);
-                            }
-                            virtualMachine.IpAddressFqdnPairs = ipAddressFqdnPairs.AsReadOnly();
-
-                            virtualmachines.Add(virtualMachine);
-                        }
-                    }
-                    return virtualmachines.AsReadOnly();
-                }
+                connectionDestinations.Add(new ConnectionDestination(part, connectionDestinationType));
             }
+            return connectionDestinations.AsReadOnly();
         }
     }
 }

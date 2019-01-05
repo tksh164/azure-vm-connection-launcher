@@ -6,21 +6,14 @@ namespace AzureVmConnectionLauncher.Service
 {
     public interface IAzureOperationService
     {
-        void ConnectAccount();
-        ObservableCollection<AzureSubscriptionViewModel> GetSubscriptions();
-        void SetCurrentSubscription(string subscriptionId);
+        ObservableCollection<AzureSubscriptionViewModel> ConnectAccount();
         ObservableCollection<AzureResourceGroupViewModel> GetResourceGroups(AzureSubscription subscription);
-        ObservableCollection<AzureVirtualMachineViewModel> GetVirtualMachines(string resourceGroupName);
+        ObservableCollection<AzureVirtualMachineViewModel> GetVirtualMachines(string subscriptionId, string resourceGroupName);
     }
 
     internal class AzureOperationService : IAzureOperationService
     {
-        public void ConnectAccount()
-        {
-            AzureOperation.ConnectAccount();
-        }
-
-        public ObservableCollection<AzureSubscriptionViewModel> GetSubscriptions()
+        public ObservableCollection<AzureSubscriptionViewModel> ConnectAccount()
         {
             var placeholderResourceGroupItem = new AzureResourceGroupViewModel()
             {
@@ -30,7 +23,7 @@ namespace AzureVmConnectionLauncher.Service
                 VirtualMachines = null,
             };
 
-            var subscriptions = AzureOperation.GetSubscriptions();
+            var subscriptions = AzureOperation.ConnectAccount();
             var subscriptionTreeViewItems = new ObservableCollection<AzureSubscriptionViewModel>();
             foreach (var subscription in subscriptions)
             {
@@ -47,11 +40,6 @@ namespace AzureVmConnectionLauncher.Service
             return subscriptionTreeViewItems;
         }
 
-        public void SetCurrentSubscription(string subscriptionId)
-        {
-            AzureOperation.SetCurrentSubscription(subscriptionId);
-        }
-
         public ObservableCollection<AzureResourceGroupViewModel> GetResourceGroups(AzureSubscription subscription)
         {
             var placeholderVirtualMachineItem = new AzureVirtualMachineViewModel()
@@ -60,7 +48,7 @@ namespace AzureVmConnectionLauncher.Service
                 IsPlaceholder = true,
             };
 
-            var resourceGroups = AzureOperation.GetResourceGroups();
+            var resourceGroups = AzureOperation.GetResourceGroups(subscription.SubscriptionId);
             var resourceGroupTreeViewItems = new ObservableCollection<AzureResourceGroupViewModel>();
             foreach (var resourceGroup in resourceGroups)
             {
@@ -78,23 +66,24 @@ namespace AzureVmConnectionLauncher.Service
             return resourceGroupTreeViewItems;
         }
 
-        public ObservableCollection<AzureVirtualMachineViewModel> GetVirtualMachines(string resourceGroupName)
+        public ObservableCollection<AzureVirtualMachineViewModel> GetVirtualMachines(string subscriptionId, string resourceGroupName)
         {
-            var virtualMachines = AzureOperation.GetVirtualMachines(resourceGroupName);
+            var virtualMachines = AzureOperation.GetVirtualMachines(subscriptionId, resourceGroupName);
             var virtualMachineTreeViewItems = new ObservableCollection<AzureVirtualMachineViewModel>();
             foreach (var virtualMachine in virtualMachines)
             {
                 var virtualMachineItem = new AzureVirtualMachineViewModel()
                 {
                     VirtualMachine = virtualMachine,
-                    IpAddressFqdnPairs = new ObservableCollection<IpAddressFqdnPairViewModel>(),
+                    ConnectionDestinations = new ObservableCollection<ConnectionDestinationViewModel>(),
                 };
 
-                foreach (var pair in virtualMachine.IpAddressFqdnPairs)
+                foreach (var destination in virtualMachine.ConnectionDestinations)
                 {
-                    virtualMachineItem.IpAddressFqdnPairs.Add(new IpAddressFqdnPairViewModel {
+                    virtualMachineItem.ConnectionDestinations.Add(new ConnectionDestinationViewModel
+                    {
                         VirtualMachine = virtualMachine,
-                        IpAddressFqdnPair = pair,
+                        ConnectionDestination = destination,
                     });
                 }
 

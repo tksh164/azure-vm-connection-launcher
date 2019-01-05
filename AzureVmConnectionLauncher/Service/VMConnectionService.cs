@@ -2,22 +2,20 @@
 {
     public interface IVMConnectionService
     {
-        void StartRdpProcess(string ipAddress, string fqdn, string adminUserName);
-        void StartSshProcess(string ipAddress, string fqdn, string adminUserName);
+        void StartRdpProcess(string connectionDestination, string adminUserName);
+        void StartSshProcess(string connectionDestination, string adminUserName);
     }
 
     public class VMConnectionService : IVMConnectionService
     {
-        public void StartRdpProcess(string ipAddress, string fqdn, string userName)
+        public void StartRdpProcess(string connectionDestination, string userName)
         {
-            var server = string.IsNullOrWhiteSpace(fqdn) ? ipAddress : fqdn;
-            MstscRdpConnection.LaunchMstsc(server, userName);
+            MstscRdpConnection.LaunchMstsc(connectionDestination, userName);
         }
 
-        public void StartSshProcess(string ipAddress, string fqdn, string userName)
+        public void StartSshProcess(string connectionDestination, string userName)
         {
-            var server = string.IsNullOrWhiteSpace(fqdn) ? ipAddress : fqdn;
-            OpenSshConnection.LaunchOpenSsh(server, userName);
+            OpenSshConnection.LaunchOpenSsh(connectionDestination, userName);
         }
     }
 }

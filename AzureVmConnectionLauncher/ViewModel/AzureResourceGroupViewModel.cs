@@ -48,8 +48,7 @@ namespace AzureVmConnectionLauncher.ViewModel
                     {
                         Task.Run(() => {
                             var service = new AzureOperationService();
-                            service.SetCurrentSubscription(Subscription.SubscriptionId);
-                            VirtualMachines = service.GetVirtualMachines(ResourceGroup.ResourceGroupName);
+                            VirtualMachines = service.GetVirtualMachines(Subscription.SubscriptionId, ResourceGroup.ResourceGroupName);
                         });
                     }
                 }

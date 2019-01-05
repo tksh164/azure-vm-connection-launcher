@@ -44,7 +44,6 @@ namespace AzureVmConnectionLauncher.ViewModel
                     {
                         Task.Run(() => {
                             var service = new AzureOperationService();
-                            service.SetCurrentSubscription(Subscription.SubscriptionId);
                             ResourceGroups = service.GetResourceGroups(Subscription);
                         });
                     }

@@ -12,11 +12,10 @@ namespace AzureVmConnectionLauncher.Service
 
         private static bool StartOpenSshProcess(string server, string userName)
         {
-            var openSshExePath = Environment.ExpandEnvironmentVariables(@"%windir%\System32\OpenSSH\ssh.exe");
             using (var process = new Process())
             {
-                process.StartInfo.FileName = Environment.ExpandEnvironmentVariables(@"%windir%\system32\cmd.exe");
-                process.StartInfo.Arguments = string.Format(@"/c {0} {1}@{2}", openSshExePath, userName, server);
+                process.StartInfo.FileName = Environment.ExpandEnvironmentVariables(@"%windir%\System32\OpenSSH\ssh.exe");
+                process.StartInfo.Arguments = string.Format(@"{0}@{1}", userName, server);
                 process.StartInfo.LoadUserProfile = true;
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
